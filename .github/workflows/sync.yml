@@ -8,10 +8,15 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions: 
+      contents: write  # 添加写入权限
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-      
+      with:
+        persist-credentials: true  # 保持凭据持久化
+    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -23,15 +28,10 @@ jobs:
     - name: Run sync script
       run: python sync.py
       
-    - name: Commit changes
+    - name: Commit and push changes
       run: |
         git config --global user.name 'GitHub Actions'
         git config --global user.email 'actions@users.noreply.github.com'
         git add jiangsu_iptv.m3u
-        git commit -m "Auto-update: $(date +'%Y-%m-%d %H:%M')" || echo "No changes to commit"
-        
-    - name: Push changes
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: main
+        git diff-index --quiet HEAD || git commit -m "Auto-update: $(date +'%Y-%m-%d %H:%M UTC')"
+        git push
